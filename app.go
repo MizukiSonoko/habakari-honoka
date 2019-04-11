@@ -112,7 +112,12 @@ func getIssueId(url string) (int, error) {
 func comment(text string) error {
 	owner := os.Getenv("CIRCLE_PROJECT_USERNAME")
 	repo := os.Getenv("CIRCLE_PROJECT_REPONAME")
-	id, err := getIssueId(os.Getenv("CIRCLE_PULL_REQUEST"))
+	pullReq := os.Getenv("CIRCLE_PULL_REQUEST")
+	if pullReq == ""{
+		fmt.Printf("This is not pull reqest")
+		return nil
+	}
+	id, err := getIssueId(pullReq)
 	if err != nil {
 		return errors.Wrapf(err, "getIssueId failed")
 	}
