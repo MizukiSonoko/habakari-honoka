@@ -83,11 +83,11 @@ func sendComment(owner, repo string, issuesId int, text string) error {
 	}
 	req, err := http.NewRequest("POST",
 		fmt.Sprintf("https://api.github.com/repos/%s/%s/issues/%d/comments",
-			owner, repo, issuesId), nil)
+			owner, repo, issuesId), strings.NewReader(text))
 	if err != nil {
 		return errors.Wrapf(err, "NewRequest failed")
 	}
-	fmt.Printf("token:%s\n", token)
+
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
 	req.Header.Add("Accept", "application/vnd.github.squirrel-girl-preview")
 	c := http.DefaultClient
