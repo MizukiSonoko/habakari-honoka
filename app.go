@@ -24,7 +24,8 @@ func getToken() (string, error) {
 	appID := os.Getenv("GITHUB_APP_ID")
 	installationId := os.Getenv("GITHUB_INSTALLATION_ID")
 
-	privateKey, err := jwt.ParseRSAPrivateKeyFromPEM([]byte(key))
+	privateKey, err := jwt.ParseRSAPrivateKeyFromPEM(
+		[]byte(strings.Replace(key, "\\n", "\n", -1)))
 	if err != nil {
 		panic(err)
 	}
