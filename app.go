@@ -145,7 +145,10 @@ func comment(text string) error {
 func main() {
 	flag.Parse()
 
-	var lines []string
+	lines := []string{
+		"## 計測結果を報告します",
+		"```",
+	}
 	scanner := bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {
 		text := scanner.Text()
@@ -164,6 +167,7 @@ func main() {
 	for _, l := range lines {
 		text += l + "\n"
 	}
+	text += "```\nがんばりましょうね!\n"
 	err := comment(text)
 	if err != nil {
 		fmt.Printf("comment failed err:%s\n", err)
