@@ -38,7 +38,7 @@ func getToken() (string, error) {
 	}
 
 	token, err := t.SignedString(privateKey)
-	req, err := http.NewRequest("GET",
+	req, err := http.NewRequest("POST",
 		fmt.Sprintf("https://api.github.com/app/installations/%s/access_tokens", installationId), nil)
 	if err != nil {
 		return "", errors.Wrapf(err, "NewRequest failed")
@@ -60,7 +60,6 @@ func getToken() (string, error) {
 	if err := json.Unmarshal(data, &d); err != nil {
 		return "", errors.Wrapf(err, "ReadAll failed")
 	}
-
 	return d["token"], nil
 }
 
@@ -79,13 +78,16 @@ func toMP(num float64) string {
 
 func sendComment(owner, repo string, issuesId int, text string) error {
 	token, err := getToken()
-
+	if err != nil{
+		return err
+	}
 	req, err := http.NewRequest("POST",
 		fmt.Sprintf("https://api.github.com/repos/%s/%s/issues/%d/comments",
 			owner, repo, issuesId), nil)
 	if err != nil {
 		return errors.Wrapf(err, "NewRequest failed")
 	}
+	fmt.Printf("token:%s\n", token)
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
 	req.Header.Add("Accept", "application/vnd.github.squirrel-girl-preview")
 	c := http.DefaultClient
@@ -94,6 +96,11 @@ func sendComment(owner, repo string, issuesId int, text string) error {
 		return errors.Wrapf(err, "Do failed")
 	}
 	fmt.Printf("res:%v\n", res)
+	data, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("res:%v\n", string(data))
 	return nil
 }
 
