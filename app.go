@@ -4,6 +4,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -81,9 +82,14 @@ func sendComment(owner, repo string, issuesId int, text string) error {
 	if err != nil{
 		return err
 	}
+	body, err := json.Marshal(map[string]string{"body": text})
+	if err != nil{
+		return err
+	}
+
 	req, err := http.NewRequest("POST",
 		fmt.Sprintf("https://api.github.com/repos/%s/%s/issues/%d/comments",
-			owner, repo, issuesId), strings.NewReader(text))
+			owner, repo, issuesId), bytes.NewBuffer(body))
 	if err != nil {
 		return errors.Wrapf(err, "NewRequest failed")
 	}
