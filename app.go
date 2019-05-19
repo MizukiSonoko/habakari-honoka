@@ -79,11 +79,11 @@ func toMP(num float64) string {
 
 func sendComment(owner, repo string, issuesId int, text string) error {
 	token, err := getToken()
-	if err != nil{
+	if err != nil {
 		return err
 	}
 	body, err := json.Marshal(map[string]string{"body": text})
-	if err != nil{
+	if err != nil {
 		return err
 	}
 
@@ -127,7 +127,7 @@ func comment(text string) error {
 	owner := os.Getenv("CIRCLE_PROJECT_USERNAME")
 	repo := os.Getenv("CIRCLE_PROJECT_REPONAME")
 	pullReq := os.Getenv("CIRCLE_PULL_REQUEST")
-	if pullReq == ""{
+	if pullReq == "" {
 		fmt.Printf("This is not pull reqest")
 		return nil
 	}

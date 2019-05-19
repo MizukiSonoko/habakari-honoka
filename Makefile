@@ -6,5 +6,5 @@ bench:
 	go test -test.bench=".*" ./...
 
 honoka: build
-	go test -test.bench=".*" ./... | ./honoka
+	CGO_ENABLED=1 CC=gcc go test -test.bench=".*" ./... | ./honoka
 
