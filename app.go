@@ -4,6 +4,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -24,7 +25,8 @@ func getToken() (string, error) {
 	appID := os.Getenv("GITHUB_APP_ID")
 	installationId := os.Getenv("GITHUB_INSTALLATION_ID")
 
-	privateKey, err := jwt.ParseRSAPrivateKeyFromPEM([]byte(key))
+	privateKey, err := jwt.ParseRSAPrivateKeyFromPEM(
+		[]byte(strings.Replace(key, "\\n", "\n", -1)))
 	if err != nil {
 		panic(err)
 	}
@@ -37,7 +39,7 @@ func getToken() (string, error) {
 	}
 
 	token, err := t.SignedString(privateKey)
-	req, err := http.NewRequest("GET",
+	req, err := http.NewRequest("POST",
 		fmt.Sprintf("https://api.github.com/app/installations/%s/access_tokens", installationId), nil)
 	if err != nil {
 		return "", errors.Wrapf(err, "NewRequest failed")
@@ -59,7 +61,6 @@ func getToken() (string, error) {
 	if err := json.Unmarshal(data, &d); err != nil {
 		return "", errors.Wrapf(err, "ReadAll failed")
 	}
-
 	return d["token"], nil
 }
 
@@ -78,13 +79,21 @@ func toMP(num float64) string {
 
 func sendComment(owner, repo string, issuesId int, text string) error {
 	token, err := getToken()
+	if err != nil {
+		return err
+	}
+	body, err := json.Marshal(map[string]string{"body": text})
+	if err != nil {
+		return err
+	}
 
 	req, err := http.NewRequest("POST",
 		fmt.Sprintf("https://api.github.com/repos/%s/%s/issues/%d/comments",
-			owner, repo, issuesId), nil)
+			owner, repo, issuesId), bytes.NewBuffer(body))
 	if err != nil {
 		return errors.Wrapf(err, "NewRequest failed")
 	}
+
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
 	req.Header.Add("Accept", "application/vnd.github.squirrel-girl-preview")
 	c := http.DefaultClient
@@ -93,6 +102,11 @@ func sendComment(owner, repo string, issuesId int, text string) error {
 		return errors.Wrapf(err, "Do failed")
 	}
 	fmt.Printf("res:%v\n", res)
+	data, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("res:%v\n", string(data))
 	return nil
 }
 
@@ -113,7 +127,7 @@ func comment(text string) error {
 	owner := os.Getenv("CIRCLE_PROJECT_USERNAME")
 	repo := os.Getenv("CIRCLE_PROJECT_REPONAME")
 	pullReq := os.Getenv("CIRCLE_PULL_REQUEST")
-	if pullReq == ""{
+	if pullReq == "" {
 		fmt.Printf("This is not pull reqest")
 		return nil
 	}
@@ -131,7 +145,10 @@ func comment(text string) error {
 func main() {
 	flag.Parse()
 
-	var lines []string
+	lines := []string{
+		"## 計測結果を報告します",
+		"```",
+	}
 	scanner := bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {
 		text := scanner.Text()
@@ -150,6 +167,7 @@ func main() {
 	for _, l := range lines {
 		text += l + "\n"
 	}
+	text += "```\nがんばりましょうね!\n"
 	err := comment(text)
 	if err != nil {
 		fmt.Printf("comment failed err:%s\n", err)
